@@ -24,7 +24,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', github.event.inputs.release_tag) || github.ref }}
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -53,7 +53,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', github.event.inputs.release_tag) || github.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -69,13 +69,7 @@ jobs:
       - name: Verify built package version matches tag
         run: |
           TAG_VERSION="${RELEASE_TAG#v}"
-          PY_VERSION="$(python -c 'from pathlib import Path; versions = set(); \
-for path in Path("dist").glob("*"): \
-    name = path.name; \
-    if name.startswith("samhita-") and name.endswith(".tar.gz"): versions.add(name[len("samhita-"):-len(".tar.gz")]); \
-    elif name.startswith("samhita-") and name.endswith(".whl"): versions.add(name.split("-")[1]); \
-assert len(versions) == 1, f\"Could not determine unique version from dist/: {sorted(versions)}\"; \
-print(next(iter(versions)))')"
+          PY_VERSION="$(python -c 'import tarfile; from email.parser import Parser; from pathlib import Path; sdists = list(Path("dist").glob("*.tar.gz")); assert len(sdists) == 1, f\"Expected one sdist in dist/, found: {[p.name for p in sdists]}\"; sdist = sdists[0]; tf = tarfile.open(sdist); pkg_info = next((member for member in tf.getmembers() if member.name.endswith(\"PKG-INFO\")), None); assert pkg_info is not None, f\"PKG-INFO not found in {sdist.name}\"; metadata = Parser().parsestr(tf.extractfile(pkg_info).read().decode(\"utf-8\")); tf.close(); print(metadata[\"Version\"])')"
           if [ "$PY_VERSION" != "$TAG_VERSION" ]; then
             echo "Tag version ($TAG_VERSION) does not match Python package version ($PY_VERSION)."
             exit 1
