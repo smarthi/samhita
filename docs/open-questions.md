@@ -5,6 +5,13 @@ these block M1 (traits + two baselines + byte accounting + capture tool);
 they gate the M3 parity pass and should be resolved against the primary
 papers/official repos before quoting any parity numbers.
 
+**OSCAR/OScaR/KVarN (M3 codecs):** not summarized here as open questions —
+they now have their own primary-source writeup, with real arXiv IDs,
+license checks, and equations pulled from the papers directly, at
+[docs/m3-research.md](m3-research.md). That includes the answer to
+SPEC.md §10's own flagged ambiguity about attention-sink token norm
+direction (confirmed: low, not high).
+
 ## 1. KIVI's per-channel grouping is windowed, M1's is whole-sequence
 
 arXiv:2402.02750 quantizes K per-channel in fixed windows of `group_size`
