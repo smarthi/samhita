@@ -86,6 +86,3 @@ print(next(iter(versions)))')"
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
