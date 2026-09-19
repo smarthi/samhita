@@ -85,6 +85,8 @@ This repo includes a GitHub Actions workflow at
 - `samhita` to PyPI
 
 The workflow runs on `v*` tag pushes (and can also be started manually).
+For manual runs, provide the `release_tag` workflow input (for example,
+`v0.1.0`).
 Before using it, configure these repository secrets:
 
 - `CARGO_REGISTRY_TOKEN` — crates.io API token
