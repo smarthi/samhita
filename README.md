@@ -12,23 +12,26 @@ the full design document and [docs/design.md](docs/design.md) for what M1
 actually implements (and where it deviates from the spec's illustrative
 sketch).
 
-**Status:** M1 (traits + two baseline presets + byte accounting + real
-activation capture). **Private** — no public disclosure until IP/open-source
+**Status:** M1 + M2 (traits, byte accounting, real activation capture,
+full attention-error metric stack, matched-bytes multi-seed/prompt report
+with bootstrap CIs). **Private** — no public disclosure until IP/open-source
 clearance is complete (SPEC.md §11).
 
 ## Layout
 
 ```
-crates/core     Rust: stage traits, M1 stage inventory, Pipeline, byte accounting
+crates/core     Rust: stage traits, stage inventory, Pipeline, byte accounting
 crates/cli      `samhita` binary: run one preset/side/fixture through the
                 Rust reference, print MSE + byte report as JSON
 crates/py       PyO3 bindings (scaffolded; see docs/open-questions.md #3)
 python/samhita  torch reference, presets loader, diagnostic KV cache,
-                activation capture, evaluation harness
-presets/        kivi.toml, turboquant_mse.toml
+                activation capture, attention-error metrics, harness/report
+presets/        kivi.toml, turboquant_mse.toml, turboquant_prod.toml
 fixtures/       small deterministic tensors for bit-exact tests
-docs/           design notes, open questions, per-codec evidence sheets
-reports/        generated: captured activation shards, error-vs-bytes plots
+docs/           design notes, open questions, per-codec evidence sheets,
+                m3-research.md (OSCAR/OScaR/KVarN prep, not implemented)
+reports/        generated: captured activation shards, error-vs-bytes
+                plots, the M2 report (m2_report.{json,md,png})
 ```
 
 ## Quickstart
@@ -62,6 +65,16 @@ python -m samhita.cli demo
 ```
 
 writes `reports/error_vs_bytes.json` and `reports/error_vs_bytes.png`.
+
+The M2 report — real WikiText-2 prompts, all three presets, the full
+attention-error metric stack, multiple rotation seeds, bootstrap CIs:
+
+```bash
+pip install -e ".[capture,harness]"
+python -m samhita.cli report
+```
+
+writes `reports/m2_report.{json,md,png}`.
 
 ## Why "measured bytes only"
 

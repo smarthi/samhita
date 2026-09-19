@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-capture = ["transformers>=4.40"]
+capture = ["transformers>=4.40", "datasets>=2.19"]
 harness = ["matplotlib>=3.7"]
 dev = ["pytest>=7"]
 

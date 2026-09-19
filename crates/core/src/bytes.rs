@@ -57,8 +57,9 @@ pub fn compute_bytes(pipeline: &Pipeline, sample: &Tensor2, input: &AccountingIn
     assert_eq!(sample.cols, pipeline.head_dim, "sample must have head_dim cols");
 
     let packed = pipeline.encode(sample);
-    let per_instance_payload =
-        packed.codes.packed_size_bytes() + packed.side.per_token_bytes() * packed.window_split.middle as f64;
+    let per_instance_payload = packed.codes.packed_size_bytes()
+        + packed.residual_codes.packed_size_bytes()
+        + packed.side.per_token_bytes() * packed.window_split.middle as f64;
     let per_instance_window = (packed.window_split.sink + packed.window_split.recent) as f64
         * pipeline.head_dim as f64
         * pipeline.window.high_prec_dtype_bytes as f64;
@@ -102,6 +103,7 @@ mod tests {
         PipelineConfig {
             rotation: RotationKind::None,
             scale: NormalizationKind::None,
+            residual: crate::pipeline::ResidualKind::None,
             quantizer: match axis {
                 GroupAxis::PerToken => QuantizerConfig::GroupRtn { bits, axis: crate::pipeline::GroupAxisCfg::PerToken },
                 GroupAxis::PerChannel => {
@@ -207,6 +209,7 @@ mod tests {
             let cfg = PipelineConfig {
                 rotation: RotationKind::None,
                 scale: NormalizationKind::None,
+                residual: crate::pipeline::ResidualKind::None,
                 quantizer: QuantizerConfig::GroupRtn { bits: 4, axis: crate::pipeline::GroupAxisCfg::PerToken },
                 window: WindowConfig { sink, recent, dtype_bytes },
             };

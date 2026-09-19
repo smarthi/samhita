@@ -80,6 +80,7 @@ def _format_inline_table(d: dict[str, Any]) -> str:
 def _format_side_table(side_cfg: dict[str, Any]) -> str:
     lines = [f'rotation = "{side_cfg["rotation"]}"', f'scale = "{side_cfg["scale"]}"']
     lines.append(f"quantizer = {_format_inline_table(side_cfg['quantizer'])}")
+    lines.append(f'residual = "{side_cfg.get("residual", "none")}"')
     lines.append(f"window = {_format_inline_table(side_cfg['window'])}")
     return "\n".join(lines)
 
@@ -101,5 +102,25 @@ def preset_with_bits(base_preset_path: Path, side: str, bits: int, tmp_path: Pat
     text += "[v]\n" + _format_side_table(raw["v"]) + "\n"
 
     out_path = tmp_path / f"{raw['name']}_{side}_{bits}bit.toml"
+    out_path.write_text(text)
+    return out_path
+
+
+def preset_with_bits_both_sides(base_preset_path: Path, bits: int, tmp_path: Path) -> Path:
+    """Like `preset_with_bits`, but overrides `quantizer.bits` on *both*
+    `[k]` and `[v]` to the same value — for the M2 harness's matched-bytes
+    sweep, which treats "bits" as one shared knob per preset rather than
+    sweeping K and V independently (SPEC.md §6.3: compare at matched
+    measured *bytes*, here summed across K+V)."""
+    with open(base_preset_path, "rb") as f:
+        raw = tomllib.load(f)
+    raw["k"]["quantizer"]["bits"] = bits
+    raw["v"]["quantizer"]["bits"] = bits
+
+    text = f'name = "{raw["name"]}"\n\n'
+    text += "[k]\n" + _format_side_table(raw["k"]) + "\n\n"
+    text += "[v]\n" + _format_side_table(raw["v"]) + "\n"
+
+    out_path = tmp_path / f"{raw['name']}_{bits}bit.toml"
     out_path.write_text(text)
     return out_path

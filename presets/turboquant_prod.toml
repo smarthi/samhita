@@ -1,0 +1,42 @@
+# TurboQuant (Prod variant): the inner-product-optimized sibling of
+# turboquant_mse, arXiv:2504.19874, building on QJL (arXiv:2406.03482).
+#
+# K gets an extra `qjl_1bit` residual on top of the same sign_residual
+# scheme turboquant_mse uses: a 1-bit sign projection of the stage-1
+# residual through a fixed random Gaussian matrix, giving an *unbiased*
+# estimator of q.k at score time (see crates/core/src/stages/qjl_residual.rs
+# for the derivation). V keeps plain sign_residual — unbiased inner-product
+# estimation doesn't help V, whose error enters the output linearly via
+# attention weights, not via a dot product with Q (SPEC.md's own K/V
+# asymmetry principle, §4.1).
+name = "turboquant_prod"
+
+[k]
+rotation = "hadamard"
+scale = "none"
+quantizer = { kind = "sign_residual", bits = 3 }
+residual = "qjl_1bit"
+window = { sink = 4, recent = 128, dtype_bytes = 2 }
+
+[v]
+rotation = "hadamard"
+scale = "none"
+quantizer = { kind = "sign_residual", bits = 4 }
+window = { sink = 4, recent = 128, dtype_bytes = 2 }
+
+[evidence]
+source = "arXiv:2504.19874 (TurboQuant Prod variant), building on arXiv:2406.03482 (QJL)"
+calibration = "none"
+paper_claims = [
+    "unbiased inner-product estimator combining a stage-1 MSE quantizer at (b-1) bits with a 1-bit QJL residual, giving b total bits",
+    "3.5-bit KV cache compression with zero accuracy loss on LongBench in the paper's own reported setting",
+]
+not_claimed = [
+    "that qjl_1bit reduces QKt score error vs. plain decode+dot on arbitrary data: it is an UNBIASED but noisier estimator, and unbiased is not the same as lower-error — on iid random synthetic Q/K (crates/core/tests/qjl_score_vs_decode.rs's original attempt at this claim) the true residual contribution q.r already averages to ~0 by symmetry, so the correction only adds variance with nothing systematic to correct; whether it actually helps requires real (correlated) attention Q/K, which is exactly the SPEC.md §2/§10 ban on synthetic-only codec validation this project is built around — see docs/codecs/turboquant_prod.md",
+    "the exact formula here was extracted via an automated fetch-and-summarize pass over the paper's arXiv HTML rendering, not a hand read of the PDF/LaTeX (see the PROVENANCE NOTE in qjl_residual.rs) — re-verify before quoting parity numbers",
+]
+seeds_in_paper = 1
+models_in_paper = ["unspecified in the fetched summary; re-check the paper directly"]
+our_status = "diagnostic"
+parity_checked = false
+license_of_reference_impl = "N/A - clean-room from the paper (with the provenance caveat above), no code ported"

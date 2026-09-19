@@ -46,6 +46,18 @@ class Codes:
     residual_scale: torch.Tensor | None = None
 
 
+@dataclass
+class ResidualCodes:
+    """Torch-side mirror of `samhita_core::traits::ResidualCodes`.
+    `kind is None` mirrors the Rust `ResidualCodes::None` variant."""
+
+    kind: str | None = None
+    rows: int = 0
+    proj_dim: int = 0
+    sign_packed: torch.Tensor | None = None  # bool tensor, (rows, proj_dim)
+    row_norm: torch.Tensor | None = None
+
+
 class Stage(ABC):
     name: str = "stage"
 
@@ -76,3 +88,18 @@ class Quantizer(Stage):
 
     @abstractmethod
     def bits_per_element(self) -> float: ...
+
+
+class Residual(Stage):
+    """Mirrors `samhita_core::traits::Residual`. `apply` and
+    `score_correction` are separate because a residual encoding need not
+    invert to a vector correction (see `stages.qjl_residual`)."""
+
+    @abstractmethod
+    def encode(self, x: torch.Tensor, recon: torch.Tensor) -> ResidualCodes: ...
+
+    @abstractmethod
+    def apply(self, recon: torch.Tensor, r: ResidualCodes) -> torch.Tensor: ...
+
+    @abstractmethod
+    def score_correction(self, q: torch.Tensor, r: ResidualCodes) -> torch.Tensor: ...

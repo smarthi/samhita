@@ -1,9 +1,10 @@
-# Open questions / known ambiguities (M1)
+# Open questions / known ambiguities (M1 + M2)
 
 Per SPEC.md §12.3: write the ambiguity down rather than guess. None of
-these block M1 (traits + two baselines + byte accounting + capture tool);
-they gate the M3 parity pass and should be resolved against the primary
-papers/official repos before quoting any parity numbers.
+these block M1 (traits + two baselines + byte accounting + capture tool)
+or M2 (metric stack + report); items 1-4 gate the M3 parity pass and
+should be resolved against the primary papers/official repos before
+quoting any parity numbers.
 
 **OSCAR/OScaR/KVarN (M3 codecs):** not summarized here as open questions —
 they now have their own primary-source writeup, with real arXiv IDs,
@@ -80,6 +81,23 @@ operations so an edge path can estimate `q·k` logits directly from packed
 keys without a full dequantize. `Pipeline::score` in
 `crates/core/src/pipeline.rs` currently *is* decode-then-dot (explicitly
 documented as such) — no codec in the M1 stage inventory has a cheaper
-estimator. `qjl_1bit`'s whole point (M2, TurboQuant Prod) is an unbiased
-inner-product estimator that doesn't require this; that's when `score`
-first diverges from `decode`+dot for real.
+estimator. **Resolved in M2:** `qjl_1bit` (TurboQuant Prod) is the first
+codec where `score` genuinely diverges from `decode`+dot — see
+docs/design.md's "M2: the metric stack, `qjl_1bit`, and the first real
+report" section.
+
+## 6. Is `turboquant_prod` actually worth shipping as a preset?
+
+The M2 report (`reports/m2_report.md`, real Qwen2.5-0.5B-Instruct
+activations, layer 0 head 0, 5 WikiText-2 prompts, 3 rotation seeds) found
+`turboquant_prod` costs strictly *more* measured bytes than
+`turboquant_mse` at every matched bit setting (the extra QJL bit) while
+having *worse* QKᵀ logit error and worse attention-output error at every
+one of them — on this one layer/head. That's a real, reproducible result
+on real data, not a synthetic artifact (see docs/codecs/turboquant_prod.md
+for the synthetic-data version of the same finding). It is *not* proof the
+preset is useless in general: one layer, one head, one small model. Before
+M3 (or before recommending `turboquant_prod` over `turboquant_mse` in any
+doc), extend `report.py`'s sweep across multiple layers/heads and at least
+one more model to see whether this holds up or was specific to layer-0's
+well-known attention-sink-dominated behavior.
