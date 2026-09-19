@@ -1,0 +1,15 @@
+/target/
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.idea/
+.DS_Store
+
+# Generated benchmark artifacts and captured activations are reproducible
+# from `python -m samhita.cli demo`; keep the repo itself small.
+/reports/*
+!/reports/.gitkeep

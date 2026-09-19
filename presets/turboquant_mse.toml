@@ -1,0 +1,40 @@
+# TurboQuant (MSE variant): Online Vector Quantization via Randomized
+# Rotations. arXiv:2504.19874
+#
+# Two stages per the paper (and the author's own prior reference in
+# dhurandhar/src/dhurandhar/turboquant.py, ported into `hadamard` +
+# `sign_residual` here): a randomized Hadamard rotation to flatten
+# heavy-tailed per-coordinate outliers, then 1-bit sign quantization of the
+# rotated vector plus an n-bit residual. "MSE" names the variant tuned for
+# reconstruction error (as opposed to `turboquant_prod`, the QJL-residual
+# variant for unbiased inner products, M2 scope per SPEC.md M2 milestone).
+name = "turboquant_mse"
+
+[k]
+rotation = "hadamard"
+scale = "none"
+quantizer = { kind = "sign_residual", bits = 4 }
+window = { sink = 4, recent = 128, dtype_bytes = 2 }
+
+[v]
+rotation = "hadamard"
+scale = "none"
+quantizer = { kind = "sign_residual", bits = 4 }
+window = { sink = 4, recent = 128, dtype_bytes = 2 }
+
+[evidence]
+source = "arXiv:2504.19874"
+calibration = "none"
+paper_claims = [
+    "~3.5 effective bits/channel via 1 sign bit + n-bit residual after randomized Hadamard rotation",
+    "<1% downstream perplexity degradation on KV cache compression at that budget",
+]
+not_claimed = [
+    "no kernel latency claims (SPEC.md non-goal: no GPU serving kernel comparisons)",
+    "effective-bits accounting here is measured (SPEC §5.3), not the paper's own approximate formula",
+]
+seeds_in_paper = 1
+models_in_paper = ["Gemma", "Llama"]
+our_status = "diagnostic"
+parity_checked = false
+license_of_reference_impl = "Apache-2.0 (ported from the author's own dhurandhar repo, src/dhurandhar/turboquant.py)"

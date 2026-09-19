@@ -1,0 +1,21 @@
+[workspace]
+resolver = "2"
+members = ["crates/core", "crates/cli", "crates/py"]
+# `crates/py` (PyO3 bindings) needs a linkable Python (extension-module
+# `-undefined dynamic_lookup` wiring is environment-sensitive, see
+# docs/open-questions.md); it's excluded from the default `cargo
+# build`/`cargo test` set so those stay green without a maturin/Python dev
+# setup. Build it explicitly with `cargo build -p samhita-py` once that's
+# in place.
+default-members = ["crates/core", "crates/cli"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/smarthi/samhita"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+anyhow = "1"

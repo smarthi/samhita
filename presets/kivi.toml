@@ -1,0 +1,47 @@
+# KIVI: a Tuning-Free Asymmetric 2bit Quantization for KV Cache
+# arXiv:2402.02750
+#
+# Paper design: K is quantized per-channel (grouped along the token axis in
+# fixed-size groups, asymmetric affine quant); V is quantized per-token
+# (asymmetric affine quant); a "residual length" R of the most recent
+# tokens is kept at full precision.
+#
+# M1 SIMPLIFICATION (see docs/open-questions.md #1): the paper groups the
+# K per-channel axis into fixed windows of `group_size` tokens (32 in the
+# reference implementation), recomputing a fresh scale every `group_size`
+# tokens as the sequence grows. `group_rtn`'s `per_channel` axis here uses
+# one scale per channel over the *entire* post-window sequence instead.
+# This is a real deviation from the paper worth flagging before quoting
+# parity numbers, but it doesn't change the byte-accounting machinery or
+# the M1 stage inventory, so we ship it now and fix the grouping-into-
+# windows-of-32 behavior before the M3 parity pass.
+name = "kivi"
+
+[k]
+rotation = "none"
+scale = "none"
+quantizer = { kind = "group_rtn", bits = 2, axis = "per_channel" }
+window = { sink = 0, recent = 128, dtype_bytes = 2 }
+
+[v]
+rotation = "none"
+scale = "none"
+quantizer = { kind = "group_rtn", bits = 2, axis = "per_token" }
+window = { sink = 0, recent = 128, dtype_bytes = 2 }
+
+[evidence]
+source = "arXiv:2402.02750"
+calibration = "none"
+paper_claims = [
+    "2-bit KV cache quantization with <=~1 point perplexity/accuracy loss vs fp16 on LLaMA/Falcon/Mistral",
+    "up to 2.6x peak-memory reduction and higher throughput at long context / large batch",
+]
+not_claimed = [
+    "no claim about K/V codec quality under matched-bytes comparison against non-affine (rotation-based) codecs",
+    "paper's group_size=32 fixed-window grouping is not yet reproduced here (see M1 simplification note above)",
+]
+seeds_in_paper = 1
+models_in_paper = ["LLaMA", "Falcon", "Mistral"]
+our_status = "diagnostic"
+parity_checked = false
+license_of_reference_impl = "unknown - clean-room implementation from the paper, no code ported"
