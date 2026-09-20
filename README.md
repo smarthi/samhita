@@ -76,6 +76,22 @@ python -m samhita.cli report
 
 writes `reports/m2_report.{json,md,png}`.
 
+## Publishing
+
+This repo includes a GitHub Actions workflow at
+`.github/workflows/publish.yml` that publishes:
+
+- `samhita-core` to crates.io
+- `samhita` to PyPI
+
+The workflow runs on `v*` tag pushes (and can also be started manually).
+For manual runs, provide the `release_tag` workflow input (for example,
+`v0.1.0`).
+Before using it, configure these repository secrets:
+
+- `CARGO_REGISTRY_TOKEN` — crates.io API token
+- `PYPI_API_TOKEN` — PyPI API token
+
 ## Why "measured bytes only"
 
 Every byte figure anywhere in this repo traces back to one function,
