@@ -38,6 +38,26 @@ jobs:
             exit 1
           fi
 
+      - name: Backfill crates.io description for older tags
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("crates/core/Cargo.toml")
+          text = path.read_text()
+
+          if "description =" in text:
+              raise SystemExit(0)
+
+          marker = 'license.workspace = true\n'
+          description = 'description = "Composable KV-cache codec framework core traits and pipeline"\n'
+          if marker not in text:
+              raise SystemExit(f"Expected to find {marker!r} in {path}")
+
+          path.write_text(text.replace(marker, marker + description, 1))
+          print(f"Added missing description to {path} for publish.")
+          PY
+
       - name: Publish samhita-core
         run: cargo publish -p samhita-core --locked
         env:
