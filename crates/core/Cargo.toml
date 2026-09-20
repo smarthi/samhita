@@ -3,6 +3,7 @@ name = "samhita-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "Composable KV-cache codec framework core traits and pipeline"
 
 [dependencies]
 serde.workspace = true
