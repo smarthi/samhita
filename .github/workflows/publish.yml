@@ -42,20 +42,26 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import tomllib
 
           path = Path("crates/core/Cargo.toml")
           text = path.read_text()
+          description = "Composable KV-cache codec framework core traits and pipeline"
 
-          if "description =" in text:
+          package = tomllib.loads(text).get("package", {})
+          if isinstance(package.get("description"), str) and package["description"].strip():
               raise SystemExit(0)
 
-          marker = 'license.workspace = true\n'
-          description = 'description = "Composable KV-cache codec framework core traits and pipeline"\n'
-          if marker not in text:
-              raise SystemExit(f"Expected to find {marker!r} in {path}")
+          newline = "\r\n" if "\r\n" in text else "\n"
+          lines = text.splitlines(keepends=True)
+          for index, line in enumerate(lines):
+              if line.strip() == "[package]":
+                  lines.insert(index + 1, f'description = "{description}"{newline}')
+                  path.write_text("".join(lines))
+                  print(f"Added missing description to {path} for publish.")
+                  raise SystemExit(0)
 
-          path.write_text(text.replace(marker, marker + description, 1))
-          print(f"Added missing description to {path} for publish.")
+          raise SystemExit(f"Expected to find [package] section in {path}")
           PY
 
       - name: Publish samhita-core
